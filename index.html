@@ -1,0 +1,126 @@
+<html lang="en">
+   <head>
+       <meta charset="UTF-8">
+       <meta name="viewport" content="width=device-width, initial-scale=1.0">
+       <title>Minesweeper Game</title>
+       <script src="https://cdn.tailwindcss.com"></script>
+       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css"></link>
+       <style>
+           .cell {
+               width: 30px;
+               height: 30px;
+               display: flex;
+               align-items: center;
+               justify-content: center;
+               cursor: pointer;
+           }
+           .cell.revealed {
+               background-color: #e2e8f0;
+               cursor: default;
+           }
+           .cell.mine {
+               background-color: #f87171;
+           }
+       </style>
+   </head>
+   <body class="bg-gray-100 flex items-center justify-center min-h-screen">
+       <div class="text-center">
+           <h1 class="text-4xl font-bold mb-4">Minesweeper</h1>
+           <div id="minesweeper" class="grid grid-cols-10 gap-1 w-max mx-auto"></div>
+           <button onclick="initGame()" class="mt-4 px-4 py-2 bg-blue-500 text-white rounded">Restart Game</button>
+       </div>
+
+       <script>
+           const rows = 10;
+           const cols = 10;
+           const minesCount = 20;
+           let board = [];
+           let revealedCount = 0;
+
+           function initGame() {
+               board = [];
+               revealedCount = 0;
+               const minesweeper = document.getElementById('minesweeper');
+               minesweeper.innerHTML = '';
+               for (let i = 0; i < rows; i++) {
+                   board.push([]);
+                   for (let j = 0; j < cols; j++) {
+                       const cell = document.createElement('div');
+                       cell.classList.add('cell', 'bg-gray-300', 'border', 'border-gray-400');
+                       cell.dataset.row = i;
+                       cell.dataset.col = j;
+                       cell.addEventListener('click', () => revealCell(i, j));
+                       minesweeper.appendChild(cell);
+                       board[i].push({ mine: false, revealed: false, element: cell });
+                   }
+               }
+               placeMines();
+           }
+
+           function placeMines() {
+               let placedMines = 0;
+               while (placedMines < minesCount) {
+                   const row = Math.floor(Math.random() * rows);
+                   const col = Math.floor(Math.random() * cols);
+                   if (!board[row][col].mine) {
+                       board[row][col].mine = true;
+                       placedMines++;
+                   }
+               }
+           }
+
+           function revealCell(row, col) {
+               const cell = board[row][col];
+               if (cell.revealed) return;
+               cell.revealed = true;
+               cell.element.classList.add('revealed');
+               revealedCount++;
+               if (cell.mine) {
+                   cell.element.classList.add('mine');
+                   cell.element.innerHTML = '<i class="fas fa-bomb"></i>';
+                   alert('Game Over!');
+                   initGame();
+                   return;
+               }
+               const minesAround = countMinesAround(row, col);
+               if (minesAround > 0) {
+                   cell.element.textContent = minesAround;
+               } else {
+                   revealAdjacentCells(row, col);
+               }
+               if (revealedCount === rows * cols - minesCount) {
+                   alert('You Win!');
+                   initGame();
+               }
+           }
+
+           function countMinesAround(row, col) {
+               let count = 0;
+               for (let i = -1; i <= 1; i++) {
+                   for (let j = -1; j <= 1; j++) {
+                       const newRow = row + i;
+                       const newCol = col + j;
+                       if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols && board[newRow][newCol].mine) {
+                           count++;
+                       }
+                   }
+               }
+               return count;
+           }
+
+           function revealAdjacentCells(row, col) {
+               for (let i = -1; i <= 1; i++) {
+                   for (let j = -1; j <= 1; j++) {
+                       const newRow = row + i;
+                       const newCol = col + j;
+                       if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < cols) {
+                           revealCell(newRow, newCol);
+                       }
+                   }
+               }
+           }
+
+           initGame();
+       </script>
+   </body>
+   </html>
